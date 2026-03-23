@@ -1,0 +1,3 @@
+[submodule "threeDFixer/representations/mesh/flexicubes"]
+	path = threeDFixer/representations/mesh/flexicubes
+	url = https://github.com/MaxtirError/FlexiCubes.git
