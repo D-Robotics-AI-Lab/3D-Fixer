@@ -1,3 +1,9 @@
+# This file is modified from TRELLIS:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Modifications Copyright (c) 2026 Ze-Xin Yin and Robot labs of Horizon Robotics.
+
 import os
 from PIL import Image
 import json
@@ -12,7 +18,7 @@ from glob import glob
 
 class SparseFeat2RenderRandRot(StandardDatasetBase):
     """
-    SparseFeat2Render dataset.
+    SparseFeat2RenderRandRot dataset.
     
     Args:
         roots (str): paths to the dataset
@@ -62,7 +68,6 @@ class SparseFeat2RenderRandRot(StandardDatasetBase):
         image_path_root = os.path.join(root, 'renders', instance)
         rotated_slat_name = None
         if np.random.rand() < self.perturb_ratio:
-            # trans_list = glob(os.path.join(root, 'renders_with_rotated_slat', instance, '*/transforms.json'))
             trans_list_index = str(self.metadata.loc[instance]['valid_rots']).split(',')
             trans_list = [
                 os.path.join(root, 'renders_with_rotated_slat', instance, f'{idx}/transforms.json') for idx in trans_list_index
@@ -92,7 +97,6 @@ class SparseFeat2RenderRandRot(StandardDatasetBase):
         c2w[:3, 1:3] *= -1
         extrinsics = torch.inverse(c2w)
 
-        # image_path = os.path.join(root, 'renders', instance, metadata['file_path'])
         image_path = os.path.join(image_path_root, metadata['file_path'])
         image = Image.open(image_path)
         alpha = image.getchannel(3)

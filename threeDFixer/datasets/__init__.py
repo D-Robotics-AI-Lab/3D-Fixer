@@ -1,3 +1,9 @@
+# This file is modified from TRELLIS:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Modifications Copyright (c) 2026 Ze-Xin Yin and Robot labs of Horizon Robotics.
+
 import importlib
 
 __attributes = {
@@ -19,14 +25,6 @@ __attributes = {
     'ImageConditionedSLatRandRot': 'structured_latent_random_rot',
     'SparseFeat2RenderRandRot': 'sparse_feat2render_random_rot',
     'Slat2RenderGeoRandRot': 'structured_latent2render_random_rot',
-    'SceneImageConditionedVoxel': 'scene_sparse_structure_latent',
-    'SceneConditionedSLat': 'scene_structured_latent',
-    'SceneImageConditionedVoxelSingle': 'scene_sparse_structure_latent_single',
-    'SceneImageConditionedVoxelSingleMixObject': 'scene_sparse_structure_latent_single_mix_obj',
-    'ObjectImageConditionedSparseStructureVoxel': 'scene_sparse_structure_latent_obj_pretrain',
-    'SceneImageConditionedVoxelSingleDPO': 'scene_sparse_structure_latent_single_dpo',
-    'Scene3DFrontConditionedVoxel': 'scene_sparse_structure_latent_single_3dfront',
-    'MixOursWith3DFront': 'scene_sparse_structure_latent_mix_data',
 }
 
 __submodules = []
@@ -87,38 +85,4 @@ if __name__ == '__main__':
     # VAE mesh dec
     from .structured_latent2render_random_rot import (
         Slat2RenderGeoRandRot
-    )
-
-    # Scene ss
-    from .scene_sparse_structure_latent import (
-        SceneImageConditionedVoxel
-    )
-    # Scene ss single
-    from .scene_sparse_structure_latent_single import (
-        SceneImageConditionedVoxelSingle
-    )
-    # 3D-Front
-    from .scene_sparse_structure_latent_single_3dfront import (
-        Scene3DFrontConditionedVoxel
-    )
-    # 3D-Front mix ours
-    from .scene_sparse_structure_latent_mix_data import (
-        MixOursWith3DFront
-    )
-    # Scene ss mix obj
-    from .scene_sparse_structure_latent_single_mix_obj import (
-        SceneImageConditionedVoxelSingleMixObject
-    )
-    # Object data pre-training
-    from .scene_sparse_structure_latent_obj_pretrain import (
-        ObjectImageConditionedSparseStructureVoxel
-    )
-    # DPO training
-    from .scene_sparse_structure_latent_single_dpo import (
-        SceneImageConditionedVoxelSingleDPO
-    )
-
-    # Scene Slat
-    from .scene_structured_latent import (
-        SceneConditionedSLat
     )

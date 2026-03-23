@@ -1,3 +1,8 @@
+# Copied from the TRELLIS project:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+
 import re
 import numpy as np
 import cv2

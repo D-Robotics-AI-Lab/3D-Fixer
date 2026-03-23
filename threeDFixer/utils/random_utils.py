@@ -1,3 +1,8 @@
+# Copied from the TRELLIS project:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+
 import numpy as np
 
 PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53]

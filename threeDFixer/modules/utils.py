@@ -1,3 +1,8 @@
+# Copied from the TRELLIS project:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+
 import torch.nn as nn
 from ..modules import sparse as sp
 

@@ -1,3 +1,8 @@
+# Copied from the TRELLIS project:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+
 import torch
 import numpy as np
 from plyfile import PlyData, PlyElement

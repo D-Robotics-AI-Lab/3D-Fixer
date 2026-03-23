@@ -1,3 +1,8 @@
+# Copied from the TRELLIS project:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+
 import torch
 cube_corners = torch.tensor([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [
         1, 0, 1], [0, 1, 1], [1, 1, 1]], dtype=torch.int)

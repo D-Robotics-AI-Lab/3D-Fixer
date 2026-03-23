@@ -1,3 +1,8 @@
+# Copied from https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Minor modifications by Ze-Xin Yin and Robot labs of Horizon Robotics, 2026.
+
 import os
 from PIL import Image
 import json

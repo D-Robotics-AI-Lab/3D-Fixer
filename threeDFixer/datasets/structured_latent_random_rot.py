@@ -1,3 +1,9 @@
+# This file is modified from TRELLIS:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Modifications Copyright (c) 2026 Ze-Xin Yin and Robot labs of Horizon Robotics.
+
 import json
 import os
 from typing import *

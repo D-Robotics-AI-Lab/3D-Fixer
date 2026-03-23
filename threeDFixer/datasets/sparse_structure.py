@@ -1,3 +1,9 @@
+# Copied from TRELLIS:
+# https://github.com/microsoft/TRELLIS/blob/main/path/to/original_file.py
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Minor modifications by Ze-Xin Yin and Robot labs of Horizon Robotics, 2026.
+
 import os
 import json
 from typing import Union

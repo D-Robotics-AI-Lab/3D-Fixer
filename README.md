@@ -144,6 +144,17 @@ python eval_metrics_midi_testset.py \
     --testset_dir {PATH_TO_OURS_TESTSET}
 ```
 
+## License
+
+The original code in this repository is licensed under the MIT License.
+This repository also includes third-party code and modified derivatives
+from other projects, which remain subject to their respective original
+licenses. See THIRD_PARTY_NOTICES.md and per-file headers for details.
+
+## Acknowledgment
+
+3D-Fixer builds upon the following amazing projects and models: [TRELLIS](https://github.com/microsoft/TRELLIS), [MIDI](https://github.com/VAST-AI-Research/MIDI-3D), [Gen3DSR](https://github.com/AndreeaDogaru/Gen3DSR), [MoGe v2](https://github.com/microsoft/MoGe), [DINO v2](https://github.com/facebookresearch/dinov2), [VGGT](https://github.com/facebookresearch/vggt), [Depth-Anything-v2](https://github.com/DepthAnything/Depth-Anything-V2), [Depth pro](https://github.com/apple/ml-depth-pro), [Grounding DINO](https://arxiv.org/abs/2303.05499), [SAM](https://huggingface.co/facebook/sam-vit-base).
+
 ## Citation
 
 ```

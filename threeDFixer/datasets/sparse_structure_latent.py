@@ -1,3 +1,8 @@
+# Copied from https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Minor modifications by Ze-Xin Yin and Robot labs of Horizon Robotics, 2026.
+
 import os
 import json
 from typing import *
@@ -82,9 +87,8 @@ class SparseStructureLatentVisMixin:
         
         # Build camera
         yaws = [0, np.pi / 2, np.pi, 3 * np.pi / 2]
-        yaws_offset = 0 # np.random.uniform(-np.pi / 4, np.pi / 4)
+        yaws_offset = 0
         yaws = [y + yaws_offset for y in yaws]
-        # pitch = [np.random.uniform(-np.pi / 4, np.pi / 4) for _ in range(4)]
         pitch = [0 for _ in range(4)]
 
         exts = []
