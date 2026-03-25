@@ -402,3 +402,6 @@ threeDFixer_weights/**
 
 tmp
 tmp/**
+
+gradio_temp
+gradio_temp/**

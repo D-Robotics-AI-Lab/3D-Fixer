@@ -1,4 +1,6 @@
-# Adapted from https://github.com/VAST-AI-Research/MIDI-3D/blob/main/scripts/grounding_sam.py
+# Copied from https://github.com/VAST-AI-Research/MIDI-3D
+# Original license: Apache-2.0 license
+# Copyright (c) the MIDI-3D authors
 
 import argparse
 import os

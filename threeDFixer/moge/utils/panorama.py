@@ -1,3 +1,8 @@
+# Copied from the MoGe project:
+# https://github.com/microsoft/MoGe
+# Original license: MIT
+# Copyright (c) the MoGe authors
+
 import os
 os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '1'
 from pathlib import Path

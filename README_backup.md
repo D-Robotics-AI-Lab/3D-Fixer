@@ -1,6 +1,6 @@
 # [CVPR 2026] 3D-Fixer: Coarse-to-Fine In-place Completion for 3D Scenes from a Single Image
 
-## [Project Page](https://zx-yin.github.io/3dfixer/) | Paper | [Model](https://huggingface.co/HorizonRobotics/3D-Fixer) | Dataset | Online Demo
+## [Project Page](https://zx-yin.github.io/3dfixer/) | [Paper]() | [Model]() | [Dataset]() | [Online Demo]()
 
 ![teaser](assets/doc/teaser.png)
 
@@ -14,14 +14,14 @@
 
 ## Updates
 
-* [2025-03] Release model weights, evaluation dataset, and inference scripts of 3D-Fixer.
+* [2025-03] Release model weights, gradio demo, inference scripts of 3D-Fixer.
 
 <!-- Installation -->
 ## Installation
 
 ### Prerequisites
 - **System**: The code is currently tested only on **Linux**.
-- **Hardware**: An NVIDIA GPU with at least 24GB of memory is necessary. The code has been verified on NVIDIA RTX 4090, and NVIDIA RTX L20 GPUs.  
+- **Hardware**: An NVIDIA GPU with at least 24GB of memory is necessary. The code has been verified on NVIDIA RTX 4090, NVIDIA RTX 5090, and NVIDIA RTX L20 GPUs.  
 - **Software**:   
   - The [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit-archive) is needed to compile certain submodules. The code has been tested with CUDA versions 11.8 and 12.8.  
   - [Conda](https://docs.anaconda.com/miniconda/install/#quick-command-line-install) is recommended for managing dependencies.  
@@ -60,14 +60,14 @@
 <!-- Pretrained Models -->
 ## Pretrained Models
 
-We host the pretrained model at [huggingface](https://huggingface.co/HorizonRobotics/3D-Fixer).
+We host the pretrained model at [huggingface](https://huggingface.co/datasets/HorizonRobotics/3D-Fixer).
 
 The models are hosted on Hugging Face. You can directly load the models with their repository names in the code:
 ```python
 ThreeDFixerPipeline.from_pretrained("HorizonRobotics/3D-Fixer")
 ```
 
-If you prefer loading the model from local, you can download the model files from the links above and load the model with the folder path (folder structure should be maintained), download the [MoGe v2](https://huggingface.co/Ruicheng/moge-2-vitl) ckpts, and modify the ```scene_cond_model``` in ```/path/to/3D-Fixer/pipeline.json``` to ```/path/to/MoGe v2 ckpts```. Then use 3D-Fixer as follows:
+If you prefer loading the model from local, you can download the model files from the links above and load the model with the folder path (folder structure should be maintained):
 ```python
 ThreeDFixerPipeline.from_pretrained("/path/to/3D-Fixer")
 ```
@@ -77,21 +77,21 @@ ThreeDFixerPipeline.from_pretrained("/path/to/3D-Fixer")
 ### Launch Demo
 
 ```Bash
-We actively fixing a small bug of input plugin. Stay tuned.
+We actively optimizing the visualizations
 ```
 
 ## Evaluation
 
 We provide the inference and evaluation code on our test set, Gen3DSR test set, and MIDI test set.
 
-### ARSG-110K test set
+### Our test set
 
-Please download the ARSG-110K-testset.zip and object_assets.zip from [here](https://huggingface.co/datasets/HorizonRobotics/3D-Fixer-eval-data/tree/main), and unzip the files. ARSG-110K-testset.zip contains the scene data of our test set, and object_assets.zip contains our pre-processed object assets from [Toys4K](https://github.com/rehg-lab/lowshot-shapebias/tree/main/toys4k). Then you can run the following commands to perform inference:
+Please download the 
 
 ```Bash
 python inference_ours_testset.py \
     --output_dir {PATH_TO_SAVE_RESULTS} \
-    --testset_dir {PATH_TO_ARSG-110K-testset} \
+    --testset_dir {PATH_TO_OURS_TESTSET} \
     --model_dir {PATH_TO_LOAD_PRETRAINED_MODELS} \
     --rank 0 \
     --world_size 1
@@ -100,13 +100,13 @@ After running inference, you can use the following commands to get the evaluatio
 ```Bash
 python eval_metrics_ours_testset.py \
     --output_dir {PATH_TO_SAVE_RESULTS} \ 
-    --testset_dir {PATH_TO_ARSG-110K-testset} \
-    --assets_dir {PATH_TO_object_assets}
+    --testset_dir {PATH_TO_OURS_TESTSET} \
+    --assets_dir {PATH_TO_LOAD_Toys4K}
 ```
 
 ### Gen3DSR test set
 
-Please follow the instruction from [Gen3DSR](https://github.com/AndreeaDogaru/Gen3DSR?tab=readme-ov-file#-evaluation) to download the Gen3DSR test set. And download the [pre-segmented masks](https://huggingface.co/datasets/HorizonRobotics/3D-Fixer-eval-data/blob/main/gen3dsr_masks.zip) from [here](https://huggingface.co/datasets/HorizonRobotics/3D-Fixer-eval-data/tree/main),
+Please follow the instruction from [Gen3DSR](https://github.com/AndreeaDogaru/Gen3DSR?tab=readme-ov-file#-evaluation) to download the Gen3DSR test set. And download the [pre-segmented masks](),
 which we generate using the code from [Gen3DSR](https://github.com/AndreeaDogaru/Gen3DSR/blob/main/src/run.py#L178). 
 Put the pre-segmented masks in the Gen3DSR test set, and run the following code to perform inference:
 
@@ -127,15 +127,15 @@ python eval_metrics_gen3dsr_testset.py \
 
 ### MIDI test set
 
-Please follow the instruction from [MIDI](https://huggingface.co/datasets/huanngzh/3D-Front/blob/main/README.md) to download the MIDI test set.
+Please follow the instruction from [Gen3DSR](https://huggingface.co/datasets/huanngzh/3D-Front/blob/main/README.md) to download the MIDI test set.
 Then run the following code to perform inference:
 ```Bash
 python inference_midi_testset_parallel.py \
     --output_dir {PATH_TO_SAVE_RESULTS} \
     --testset_dir {PATH_TO_MIDI_TESTSET} \
     --model_dir {PATH_TO_LOAD_PRETRAINED_MODELS} \
-    --rank 0 \
-    --world_size 1
+    --rank $2 \
+    --world_size $3
 ```
 After running inference, you can use the following commands to get the evaluation metrics:
 ```Bash
@@ -143,17 +143,6 @@ python eval_metrics_midi_testset.py \
     --output_dir {PATH_TO_SAVE_RESULTS} \ 
     --testset_dir {PATH_TO_OURS_TESTSET}
 ```
-
-## License
-
-The original code in this repository is licensed under the Apache License 2.0.
-This repository also includes third-party code and modified derivatives
-from other projects, which remain subject to their respective original
-licenses. See THIRD_PARTY_NOTICES.md and per-file headers for details.
-
-## Acknowledgment
-
-3D-Fixer builds upon the following amazing projects and models: [TRELLIS](https://github.com/microsoft/TRELLIS), [MIDI](https://github.com/VAST-AI-Research/MIDI-3D), [Gen3DSR](https://github.com/AndreeaDogaru/Gen3DSR), [MoGe v2](https://github.com/microsoft/MoGe), [DINO v2](https://github.com/facebookresearch/dinov2), [VGGT](https://github.com/facebookresearch/vggt), [Depth-Anything-v2](https://github.com/DepthAnything/Depth-Anything-V2), [Depth pro](https://github.com/apple/ml-depth-pro), [Grounding DINO](https://arxiv.org/abs/2303.05499), [SAM](https://huggingface.co/facebook/sam-vit-base).
 
 ## Citation
 
