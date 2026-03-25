@@ -14,6 +14,11 @@ from copy import deepcopy
 import itertools
 import functools
 
+# Copied from the MoGe project:
+# https://github.com/microsoft/MoGe
+# Original license: MIT
+# Copyright (c) the MoGe authors
+
 __all__ = [
     'Node', 
     'Link',

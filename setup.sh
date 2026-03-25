@@ -1,3 +1,8 @@
+# Copied from https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Minor modifications by Ze-Xin Yin and Robot labs of Horizon Robotics, 2026.
+
 # Read Arguments
 TEMP=`getopt -o h --long help,new-env,basic,train,xformers,flash-attn,diffoctreerast,vox2seq,spconv,mipgaussian,kaolin,nvdiffrast,demo -n 'setup.sh' -- "$@"`
 

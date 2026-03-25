@@ -1,3 +1,10 @@
+# This file is modified from MoGe:
+# https://github.com/microsoft/MoGe
+# Original license: MIT
+# Copyright (c) the MoGe authors
+# Modifications Copyright (c) 2026 Ze-Xin Yin and Robot labs of Horizon Robotics.
+
+
 from typing import *
 from numbers import Number
 from functools import partial

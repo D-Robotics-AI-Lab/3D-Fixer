@@ -1,6 +1,6 @@
 # THIRD_PARTY_NOTICES
 
-This repository contains original code as well as code derived from third-party open-source projects. Unless otherwise specified, the original code in this repository is licensed under the MIT License.
+This repository contains original code as well as code derived from third-party open-source projects. Unless otherwise specified, the original code in this repository is licensed under the Apache License 2.0.
 
 Third-party components and modified derivatives included in this repository remain subject to their respective original licenses. The relevant third-party projects used in this repository are listed below.
 
@@ -24,7 +24,7 @@ Third-party components and modified derivatives included in this repository rema
 
 5. **Modified FlexiCubes**  
    This repository uses a modified version of [FlexiCubes](https://github.com/MaxtirError/FlexiCubes) to support vertex attributes.  
-   The modified version is licensed under the [Apache License 2.0](https://github.com/nv-tlabs/FlexiCubes/blob/main/LICENSE.txt).
+   The modified version is licensed under the [Apache License 2.0](https://github.com/MaxtirError/FlexiCubes/blob/main/LICENSE.txt).
 
 6. **diffoctreerast**  
    This repository uses [diffoctreerast](https://github.com/JeffreyXiang/diffoctreerast), which is licensed under its original [LICENSE](https://github.com/JeffreyXiang/diffoctreerast/blob/master/LICENSE).

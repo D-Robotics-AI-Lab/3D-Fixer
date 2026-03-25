@@ -412,6 +412,8 @@ def to_glb(
     debug: bool = False,
     verbose: bool = True,
     transform_fn: Callable = None,
+    metallicFactor: float = 0.0,
+    roughnessFactor: float = 1.0,
 ) -> trimesh.Trimesh:
     """
     Convert a generated asset to a glb file.
@@ -467,7 +469,8 @@ def to_glb(
         vertices = vertices @ np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
     vertices = np.nan_to_num(vertices)
     material = trimesh.visual.material.PBRMaterial(
-        roughnessFactor=1.0,
+        roughnessFactor=roughnessFactor,
+        metallicFactor=metallicFactor,
         baseColorTexture=texture,
         baseColorFactor=np.array([255, 255, 255, 255], dtype=np.uint8)
     )
