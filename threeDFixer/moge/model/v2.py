@@ -2,7 +2,7 @@
 # https://github.com/microsoft/MoGe
 # Original license: MIT
 # Copyright (c) the MoGe authors
-# Modifications Copyright (c) 2026 Ze-Xin Yin and Robot labs of Horizon Robotics.
+# Modifications Copyright (c) 2026 Ze-Xin Yin, Robot labs of Horizon Robotics, and D-Robotics.
 
 
 from typing import *

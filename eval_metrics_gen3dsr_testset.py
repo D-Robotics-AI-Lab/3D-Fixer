@@ -2,7 +2,7 @@
 # https://github.com/AndreeaDogaru/Gen3DSR
 # Original license: CC-BY-4.0
 # Copyright (c) the Gen3DSR authors
-# Modifications Copyright (c) 2026 Ze-Xin Yin and Robot labs of Horizon Robotics.
+# Modifications Copyright (c) 2026 Ze-Xin Yin, Robot labs of Horizon Robotics, and D-Robotics.
 
 
 import os
