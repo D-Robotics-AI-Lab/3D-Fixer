@@ -72,7 +72,6 @@ class SLat2RenderRandRot(StandardDatasetBase):
         image_path_root = os.path.join(root, 'renders', instance)
         rotated_slat_name = None
         if np.random.rand() < self.perturb_ratio:
-            # trans_list = glob(os.path.join(root, 'renders_with_rotated_slat', instance, '*/transforms.json'))
             trans_list_index = str(self.metadata.loc[instance]['valid_rots']).split(',')
             trans_list = [
                 os.path.join(root, 'renders_with_rotated_slat', instance, f'{idx}/transforms.json') for idx in trans_list_index

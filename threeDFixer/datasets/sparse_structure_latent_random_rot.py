@@ -40,6 +40,8 @@ class SparseStructureLatentRandRot(SparseStructureLatentVisMixin, StandardDatase
         pretrained_ss_dec (str): name of the pretrained sparse structure decoder
         ss_dec_path (str): path to the sparse structure decoder, if given, will override the pretrained_ss_dec
         ss_dec_ckpt (str): name of the sparse structure decoder checkpoint
+        perturb_scale_min, perturb_scale_max, perturb_trans_factor, perturb_rot_angles, perturb_ratio (float): perturbation parameters
+        max_mesh_size (float): maximum of mesh size.
     """
     def __init__(self,
         roots: str,
@@ -106,18 +108,18 @@ class SparseStructureLatentRandRot(SparseStructureLatentVisMixin, StandardDatase
         origin_vertices = np.asarray(mesh.vertices)
         origin_triangles = mesh.triangles
 
-        # if np.random.rand() < self.perturb_ratio:
-        perturb_rot   = (np.random.rand(3) * 2.0 - 1.0) * np.deg2rad(self.perturb_rot_angles)
-        perturb_trans = (np.random.rand(3) * 2.0 - 1.0) * self.perturb_trans_factor
-        # perturb_scale = np.random.rand() * self.perturb_scale_range + self.perturb_scale_min
-        # perturb_scale = perturb_scale if np.random.rand() < 0.8 else 0.5
+        if np.random.rand() < self.perturb_ratio:
+            perturb_rot   = (np.random.rand(3) * 2.0 - 1.0) * np.deg2rad(self.perturb_rot_angles)
+            perturb_trans = (np.random.rand(3) * 2.0 - 1.0) * self.perturb_trans_factor
+            perturb_scale = np.random.rand() * self.perturb_scale_range + self.perturb_scale_min
+            perturb_scale = perturb_scale if np.random.rand() < 0.8 else 0.5
 
-        origin_vertices = rot_vertices(origin_vertices, perturb_rot, ['z', 'y', 'x'])
-        # origin_vertices = transform_vertices(origin_vertices, ops=['scale', 'translation'],
-        #                                                 params=[perturb_scale, perturb_trans])
-        origin_vertices = transform_vertices(origin_vertices, ops=['translation'],
-                                                        params=[perturb_trans])
-        origin_vertices = renormalize_vertices(origin_vertices)
+            origin_vertices = rot_vertices(origin_vertices, perturb_rot, ['z', 'y', 'x'])
+            origin_vertices = transform_vertices(origin_vertices, ops=['scale', 'translation'],
+                                                            params=[perturb_scale, perturb_trans])
+            origin_vertices = transform_vertices(origin_vertices, ops=['translation'],
+                                                            params=[perturb_trans])
+            origin_vertices = renormalize_vertices(origin_vertices)
 
         x_0 = voxelize_mesh(origin_vertices, origin_triangles, clip_range_first=True, return_mask=False)
 

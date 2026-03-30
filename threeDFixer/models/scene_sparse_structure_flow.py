@@ -138,7 +138,7 @@ class SceneSparseStructureFlowModule(nn.Module):
         if resume_ckpts is not None:
             print (f'loading pretrained weight: {resume_ckpts}')
             model_ckpt = torch.load(resume_ckpts, map_location='cpu', weights_only=True)
-            self.load_state_dict(model_ckpt)
+            self.load_state_dict(model_ckpt, strict=False)
             del model_ckpt
         if use_fp16:
             self.convert_to_fp16()
