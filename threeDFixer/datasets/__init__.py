@@ -25,6 +25,10 @@ __attributes = {
     'ImageConditionedSLatRandRot': 'structured_latent_random_rot',
     'SparseFeat2RenderRandRot': 'sparse_feat2render_random_rot',
     'Slat2RenderGeoRandRot': 'structured_latent2render_random_rot',
+
+    'ObjectImageConditionedSparseStructureVoxel': 'scene_sparse_structure_latent_obj_pretrain',
+    'SceneImageConditionedVoxel': 'scene_sparse_structure_latent',
+    'SceneConditionedSLat': 'scene_structured_latent',
 }
 
 __submodules = []
@@ -85,4 +89,19 @@ if __name__ == '__main__':
     # VAE mesh dec
     from .structured_latent2render_random_rot import (
         Slat2RenderGeoRandRot
+    )
+
+    # object-level pre-training
+    from .scene_sparse_structure_latent_obj_pretrain import (
+        ObjectImageConditionedSparseStructureVoxel
+    )
+
+    # scene-level training dataloader for stage 1
+    from .scene_sparse_structure_latent import (
+        SceneImageConditionedVoxel
+    )
+
+    # scene-level training dataloader for stage 2
+    from .scene_structured_latent import (
+        SceneConditionedSLat
     )

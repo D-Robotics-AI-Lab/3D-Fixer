@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from ..modules.norm import GroupNorm32, ChannelLayerNorm32
 from ..modules.spatial import pixel_shuffle_3d
 from ..modules.utils import zero_module, convert_module_to_f16, convert_module_to_f32
+from . import from_pretrained
 
 
 def norm_layer(norm_type: str, *args, **kwargs) -> nn.Module:
@@ -125,6 +126,7 @@ class SparseStructureEncoder(nn.Module):
         num_res_blocks_middle: int = 2,
         norm_type: Literal["group", "layer"] = "layer",
         use_fp16: bool = False,
+        pretrained_ss_enc: str = None,
     ):
         super().__init__()
         self.in_channels = in_channels
@@ -160,6 +162,18 @@ class SparseStructureEncoder(nn.Module):
             nn.Conv3d(channels[-1], latent_channels*2, 3, padding=1)
         )
 
+        if pretrained_ss_enc is not None:
+            if pretrained_ss_enc.endswith('.pt'):
+                print (f'loading pretrained weight: {pretrained_ss_enc}')
+                model_ckpt = torch.load(pretrained_ss_enc, map_location='cpu', weights_only=True)
+                self.load_state_dict(model_ckpt)
+                del model_ckpt
+            else:
+                print (f'loading pretrained weight: {pretrained_ss_enc}')
+                pre_trained_models = from_pretrained(pretrained_ss_enc)
+                pre_trained_models: SparseStructureEncoder
+                self.load_state_dict(pre_trained_models.state_dict())
+                del pre_trained_models
         if use_fp16:
             self.convert_to_fp16()
 

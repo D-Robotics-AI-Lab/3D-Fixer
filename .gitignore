@@ -405,3 +405,7 @@ tmp/**
 
 gradio_temp
 gradio_temp/**
+
+checkpoints
+checkpoints/**
+test_train.sh

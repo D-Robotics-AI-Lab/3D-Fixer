@@ -76,9 +76,15 @@ ThreeDFixerPipeline.from_pretrained("/path/to/3D-Fixer")
 
 ### Launch Demo
 
+We provide interactive demo using gradio. Download the pretrained model for **SAM2-Hiera-Large** from [SAM2](https://github.com/facebookresearch/sam2), then place them in the checkpoints directory, and follow the instruction to install SAM2.
+
 ```Bash
-We actively fixing a small bug of input plugin. Stay tuned.
+python app.py
 ```
+
+## Dataset
+
+We provide **ARSG-110K**, a large-scale scene-level dataset containing diversity of scenes with accurate 3D object-level ground-truth, layout, and annotation based on [TRELLIS-500K](https://github.com/microsoft/TRELLIS/blob/main/DATASET.md). Please refer to the [dataset README](./DATASET.md) for more details.
 
 ## Evaluation
 
@@ -142,6 +148,130 @@ After running inference, you can use the following commands to get the evaluatio
 python eval_metrics_midi_testset.py \
     --output_dir {PATH_TO_SAVE_RESULTS} \ 
     --testset_dir {PATH_TO_OURS_TESTSET}
+```
+
+## Training
+
+3D-Fixer is constructed based on the amazing framework provided [TRELLIS](https://github.com/microsoft/TRELLIS). For details of the command please refer to [here](https://github.com/microsoft/TRELLIS?tab=readme-ov-file#%EF%B8%8F%E2%80%8D%EF%B8%8F-training). Below we provide details about the training of 3D-Fixer only.
+
+### Fine-tune **SparseStructureFlowModel**
+
+We fine-tune SparseStructureFlowModel, the stage-one model of TRELLIS, to generate sparse voxels conditioned on an input image. Since the original model is trained to generate 3D assets in canonical poses, we further fine-tune it on randomly rotated 3D assets to better adapt its priors to our task, where objects in real-world scenes are not always canonically aligned.
+
+To finetune with a single machine.
+
+```
+python train.py --config configs/finetune/rand_rot_ss_flow_img_dit_L_16l8_fp16.json \
+    --output_dir outputs/rand_rot_ss_flow_img_dit_L_16l8_fp16 \
+    --data_dir /path/to/your/dataset1,/path/to/your/dataset2 \
+    --auto_retry 3
+```
+
+Multi-nodes finetuning is the same as [TRELLIS](https://github.com/microsoft/TRELLIS?tab=readme-ov-file#%EF%B8%8F%E2%80%8D%EF%B8%8F-training).
+
+**Note that this can be trained when the data is processed with Step 1, 2, 3, 4, and 9 as in [dataset README](./DATASET.md).**
+
+### Fine-tune **SLatGaussianDecoder** and **SLatMeshDecoder**
+
+For the same reason as above, we finetune the 3DGS decoder and Mesh decoder.
+
+To finetune SLatGaussianDecoder with a single machine.
+
+```
+python train.py --config configs/finetune/rand_rot_slat_vae_dec_gs_swin8_B_64l8_fp16.json \
+    --output_dir outputs/rand_rot_slat_vae_dec_gs_swin8_B_64l8_fp16 \
+    --data_dir /path/to/your/dataset1,/path/to/your/dataset2 \
+    --auto_retry 3
+```
+
+To finetune SLatMeshDecoder with a single machine.
+
+```
+python train.py --config configs/finetune/rand_rot_slat_vae_dec_mesh_swin8_B_64l8_fp16.json \
+    --output_dir outputs/rand_rot_slat_vae_dec_mesh_swin8_B_64l8_fp16 \
+    --data_dir /path/to/your/dataset1,/path/to/your/dataset2 \
+    --auto_retry 3
+```
+
+**Note that this can be trained when the data is processed with Step 1-11 as in [dataset README](./DATASET.md).**
+
+### Fine-tune **SLatFlowModel**
+
+For the same reason as above, we finetune the second stage flow matching model.
+
+To finetune SLatFlowModel with a single machine.
+
+```
+python train.py --config configs/finetune/rand_rot_slat_flow_img_dit_L_64l8p2_fp16.json \
+    --output_dir outputs/rand_rot_slat_flow_img_dit_L_64l8p2_fp16 \
+    --data_dir /path/to/your/dataset1,/path/to/your/dataset2 \
+    --auto_retry 3
+```
+
+**Note that this can be trained when the data is processed with Step 1-11 as in [dataset README](./DATASET.md).**
+
+### Pre-train the first model of 3D-Fixer
+
+Before training the ```Coarse Structure Completer``` and the ```Fine Shape Refiner```,
+we first pre-train the model using object-level data.
+
+To finetune SLatFlowModel with a single machine.
+
+```
+python train.py --config configs/3d_fixer/scene_obj_pre_train_ss_flow_img_dit_L_16l8_fp16.json \
+    --output_dir outputs/scene_obj_pre_train_ss_flow_img_dit_L_16l8_fp16 \
+    --data_dir /path/to/your/dataset1,/path/to/your/dataset2 \
+    --auto_retry 3
+```
+
+**Note that this can be trained when the data is processed with Step 1-11 as in [dataset README](./DATASET.md).**
+
+### Train 3D-Fixer
+
+Finally, we start train the 3D-Fixer model on scene-level dataset.
+You need first follow the Step 12-13 to render the scene dataset as in in [dataset README](./DATASET.md).
+
+Make sure your data is organized as follows:
+
+```
+/path/to/scene_data/
+├── scene1/
+├── scene2/
+...
+
+/path/to/object_data/
+├── ABO/
+├── 3D-FUTURE/
+...
+```
+
+To train the ```Coarse Structure Completer``` on a single machine.
+
+```
+python train.py --config configs/3d_fixer/scene_obj_pre_train_ss_flow_img_dit_L_16l8_fp16.json \
+    --output_dir outputs/scene_obj_pre_train_ss_flow_img_dit_L_16l8_fp16 \
+    --data_dir /path/to/scene_data,/path/to/object_data \
+    --auto_retry 3
+```
+
+To train the ```Fine Shape Refiner``` on a single machine.
+
+```
+python train.py --config configs/3d_fixer/scene_fine_ss_flow_img_dit_after_obj_pretrain_L_16l8_fp16.json \
+    --output_dir outputs/scene_obj_pre_train_ss_flow_img_dit_L_16l8_fp16 \
+    --data_dir /path/to/scene_data,/path/to/object_data \
+    --auto_retry 3
+```
+
+Please update the ```resume_ckpts``` in the config to load the pre-trained checkpoint with object pre-training.
+
+To train the ```Occlusion-Aware 3D Texturer``` on a single machine.
+
+```
+python train.py --config configs/3d_fixer/scene_fine_ss_flow_img_dit_after_obj_pretrain_L_16l8_fp16.json \
+    --output_dir outputs/scene_obj_pre_train_ss_flow_img_dit_L_16l8_fp16 \
+    --data_dir /path/to/your/dataset1,/path/to/your/dataset2 \
+    --auto_retry 3
 ```
 
 ## License

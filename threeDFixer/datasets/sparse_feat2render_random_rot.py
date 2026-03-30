@@ -13,7 +13,6 @@ import torch
 import utils3d.torch
 from ..modules.sparse.basic import SparseTensor
 from .components import StandardDatasetBase
-from glob import glob
 
 
 class SparseFeat2RenderRandRot(StandardDatasetBase):
@@ -26,7 +25,8 @@ class SparseFeat2RenderRandRot(StandardDatasetBase):
         model (str): model name
         resolution (int): resolution of the data
         min_aesthetic_score (float): minimum aesthetic score
-        max_num_voxels (int): maximum number of voxels
+        max_num_voxels (int): maximum number of voxels,
+        perturb_ratio (float): perturbation ratio for the assets.
     """
     def __init__(
         self,

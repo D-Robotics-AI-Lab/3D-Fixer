@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Ze-Xin Yin and Robot labs of Horizon Robotics
+# SPDX-License-Identifier: Apache-2.0
+# See the LICENSE file in the project root for full license information.
+
 from typing import *
 import torch
 import torch.nn as nn
@@ -53,7 +57,7 @@ class ThreeDFixerPipeline(Pipeline):
         self._init_scene_cond_model(scene_cond_model)
 
     @staticmethod
-    def from_pretrained(path: str) -> "ThreeDFixerPipeline":
+    def from_pretrained(path: str, compile: bool = True) -> "ThreeDFixerPipeline":
         """
         Load a pretrained model.
 
@@ -79,13 +83,14 @@ class ThreeDFixerPipeline(Pipeline):
         new_pipeline._init_image_cond_model(args['image_cond_model'])
         new_pipeline._init_scene_cond_model(args['scene_cond_model'])
 
-        new_pipeline.models['image_cond_model'] = torch.compile(new_pipeline.models['image_cond_model'])
-        new_pipeline.models['scene_cond_model'] = torch.compile(new_pipeline.models['scene_cond_model'])
-        new_pipeline.models['sparse_structure_flow_model'] = torch.compile(new_pipeline.models['sparse_structure_flow_model'])
-        new_pipeline.models['scene_sparse_structure_flow_coarse_model'] = torch.compile(new_pipeline.models['scene_sparse_structure_flow_coarse_model'])
-        new_pipeline.models['scene_sparse_structure_flow_fine_model'] = torch.compile(new_pipeline.models['scene_sparse_structure_flow_fine_model'])
-        new_pipeline.models['sparse_structure_decoder'] = torch.compile(new_pipeline.models['sparse_structure_decoder'])
-        new_pipeline.models['sparse_structure_encoder'] = torch.compile(new_pipeline.models['sparse_structure_encoder'])
+        if compile:
+            new_pipeline.models['image_cond_model'] = torch.compile(new_pipeline.models['image_cond_model'])
+            new_pipeline.models['scene_cond_model'] = torch.compile(new_pipeline.models['scene_cond_model'])
+            new_pipeline.models['sparse_structure_flow_model'] = torch.compile(new_pipeline.models['sparse_structure_flow_model'])
+            new_pipeline.models['scene_sparse_structure_flow_coarse_model'] = torch.compile(new_pipeline.models['scene_sparse_structure_flow_coarse_model'])
+            new_pipeline.models['scene_sparse_structure_flow_fine_model'] = torch.compile(new_pipeline.models['scene_sparse_structure_flow_fine_model'])
+            new_pipeline.models['sparse_structure_decoder'] = torch.compile(new_pipeline.models['sparse_structure_decoder'])
+            new_pipeline.models['sparse_structure_encoder'] = torch.compile(new_pipeline.models['sparse_structure_encoder'])
 
         return new_pipeline
     
