@@ -283,8 +283,122 @@ python dataset_toolkits/construct_my_metadata.py --output_dir datasets/Objaverse
 Download the scene information ```ARSG-110K.zip```, and the auxiliary assets including HDR maps (```hdrs.zip```) and texture maps (```materials_floor.zip``` and ```materials_wall.zip```). Unzip and put the auxiliary assets in a folder, and unzip the ```ARSG-110K.zip```.
 
 ```
-python dataset_toolkits/render_with_rotated_slats.py <SUBSET> --output_dir <OUTPUT_DIR> [--num_views <NUM_VIEWS>] [--rank <RANK> --world_size <WORLD_SIZE>]
+python dataset_toolkits/render_scene.py 
+    --obj_root_dir <OBJ_ROOT_DIR> \
+    --obj_asset_dir <OBJ_ASSET_DIR> \
+    --scene_data_dir <SCENE_DATA_DIR> \
+    --auxiliary_assets_dir <AUXILIARY_ASSETS_DIR> \
+    [--num_views <NUM_VIEWS>] [--rank <RANK> --world_size <WORLD_SIZE>]
+```
+
+- `OBJ_ROOT_DIR`: The parent directory of all assets.
+- `OBJ_ASSET_DIR`: The directory to object assets, for example, '<ROOT_DIR>/3D-FUTURE,<ROOT_DIR>/ABO/...'.
+- `SCENE_DATA_DIR`: The directory to the unziped ```ARSG-110K.zip```.
+- `AUXILIARY_ASSETS_DIR`: The directory put HDR maps and texture maps.
+- `RANK` and `WORLD_SIZE`: Multi-node configuration.
+
+After rendering scene data, run the following command to group the training data records.
+
+```
+python dataset_toolkits/group_valid_scene_renderings.py \
+    --obj_asset_dir <OBJ_ASSET_DIR> \
+    --obj_root_dir <OBJ_ROOT_DIR> \
+    --scene_data_dir <SCENE_DATA_DIR>
 ```
 
 ### Step 13: Estimate depth maps
 
+Finally, you can use the following commands to estimate depth maps using MoGe v2, Depth-pro, Depth-Anything v2, and VGGT.
+
+#### MoGe v2:
+
+```
+python dataset_toolkits/estimate_moge_v2_depth.py \
+    --dpt_model_dir <DPT_MODEL_DIR> \
+    --scene_root_dir <SCENE_DATA_DIR> \
+    [--rank <RANK> --world_size <WORLD_SIZE>]
+```
+
+- `DPT_MODEL_DIR`: The path to load MoGe v2 ckpts.
+- `SCENE_DATA_DIR`: The directory to the rendered scenes.
+- `RANK` and `WORLD_SIZE`: Multi-node configuration.
+
+#### Depth-pro:
+
+Please follow the instruction from [depth-pro](https://github.com/apple/ml-depth-pro) to install the module, download the checkpoints, and put the checkpoints in ```./checkpoints```.
+
+```
+python dataset_toolkits/estimate_dpt_pro_depth.py \
+    --scene_root_dir <SCENE_DATA_DIR> \
+    [--rank <RANK> --world_size <WORLD_SIZE>]
+```
+
+- `SCENE_DATA_DIR`: The directory to the rendered scenes.
+- `RANK` and `WORLD_SIZE`: Multi-node configuration.
+
+#### Depth-Anything v2:
+
+Use the following commands to prepare depth anything v2 code:
+
+```
+git clone https://github.com/DepthAnything/Depth-Anything-V2.git /tmp/Depth-Anything-V2
+cp -r /tmp/Depth-Anything-V2/depth_anything_v2 ./dataset_toolkits
+```
+
+Then download the ckpts and use the commands:
+
+```
+python dataset_toolkits/estimate_dpt_pro_depth.py \
+    --dpt_model_dir <DPT_MODEL_DIR> \
+    --dpt_encoder <DPT_ENCODER> \
+    --scene_root_dir <SCENE_DATA_DIR> \
+    [--rank <RANK> --world_size <WORLD_SIZE>]
+```
+
+- `DPT_MODEL_DIR`: The path to load MoGe v2 ckpts.
+- `DPT_ENCODER`: The Encoder version for depth-anything v2.
+- `SCENE_DATA_DIR`: The directory to the rendered scenes.
+- `RANK` and `WORLD_SIZE`: Multi-node configuration.
+
+#### VGGT:
+
+Use the following commands to prepare VGGT code:
+
+```
+git clone https://github.com/facebookresearch/vggt.git /tmp/vggt
+cp -r /tmp/vggt/vggt ./dataset_toolkits
+```
+
+Then download the ckpts and use the commands:
+
+```
+python dataset_toolkits/estimate_vggt_depth.py \
+    --vggt_model_dir <VGGT_MODEL_DIR> \
+    --scene_root_dir <SCENE_DATA_DIR> \
+    [--rank <RANK> --world_size <WORLD_SIZE>]
+```
+
+- `VGGT_MODEL_DIR`: The path to load VGGT ckpts.
+- `SCENE_DATA_DIR`: The directory to the rendered scenes.
+- `RANK` and `WORLD_SIZE`: Multi-node configuration.
+
+### Step 14 (Optional): Create more new scenes
+
+If you wish to create more new scenes, you can use the following commands:
+
+```
+python dataset_toolkits/create_new_scene.py 
+    --obj_root_dir <OBJ_ROOT_DIR> \
+    --obj_asset_dir <OBJ_ASSET_DIR> \
+    --scene_data_dir <SCENE_DATA_DIR> \
+    --auxiliary_assets_dir <AUXILIARY_ASSETS_DIR> \
+    --num_scenes <NUM_SCENES> \
+    [--num_views <NUM_VIEWS>] [--rank <RANK> --world_size <WORLD_SIZE>]
+```
+
+- `OBJ_ROOT_DIR`: The parent directory of all assets.
+- `OBJ_ASSET_DIR`: The directory to object assets, for example, '<ROOT_DIR>/3D-FUTURE,<ROOT_DIR>/ABO/...'.
+- `SCENE_DATA_DIR`: The directory to save newly created scenes.
+- `AUXILIARY_ASSETS_DIR`: The directory put HDR maps and texture maps.
+- `NUM_SCENES`: Number of scenes you wish to create.
+- `RANK` and `WORLD_SIZE`: Multi-node configuration.
