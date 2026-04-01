@@ -5,6 +5,7 @@
 # Modifications Copyright (c) 2026 Ze-Xin Yin, Robot labs of Horizon Robotics, and D-Robotics.
 
 import os
+import sys
 import json
 import copy
 import sys

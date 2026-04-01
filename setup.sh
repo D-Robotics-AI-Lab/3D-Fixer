@@ -57,7 +57,7 @@ if [ "$HELP" = true ] ; then
     echo "Usage: setup.sh [OPTIONS]"
     echo "Options:"
     echo "  -h, --help              Display this help message"
-    echo "  --new-env               Create a new conda environment"
+    echo "  --new-env               Create a new virtualenv environment"
     echo "  --basic                 Install basic dependencies"
     echo "  --train                 Install training dependencies"
     echo "  --xformers              Install xformers"
@@ -73,9 +73,10 @@ if [ "$HELP" = true ] ; then
 fi
 
 if [ "$NEW_ENV" = true ] ; then
-    conda create -n threeDFixer python=3.10
-    conda activate threeDFixer
-    conda install pytorch==2.4.0 torchvision==0.19.0 pytorch-cuda=11.8 -c pytorch -c nvidia
+    virtualenv -p python3.10 run_threeDFixer
+    source run_threeDFixer/bin/activate
+    pip install pip==25.1 setuptools==75.8.2 packaging==25.0 wheel==0.45.1 pybind11 ninja Cython
+    pip install torch==2.4.0 torchvision==0.19.0
 fi
 
 # Get system information
@@ -209,9 +210,9 @@ fi
 
 if [ "$NVDIFFRAST" = true ] ; then
     if [ "$PLATFORM" = "cuda" ] ; then
-        mkdir -p /tmp/extensions
-        git clone https://github.com/NVlabs/nvdiffrast.git /tmp/extensions/nvdiffrast
-        pip install /tmp/extensions/nvdiffrast
+        mkdir -p ./tmp/extensions
+        git clone https://github.com/NVlabs/nvdiffrast.git ./tmp/extensions/nvdiffrast
+        pip install ./tmp/extensions/nvdiffrast --no-build-isolation
     else
         echo "[NVDIFFRAST] Unsupported platform: $PLATFORM"
     fi
@@ -219,9 +220,9 @@ fi
 
 if [ "$DIFFOCTREERAST" = true ] ; then
     if [ "$PLATFORM" = "cuda" ] ; then
-        mkdir -p /tmp/extensions
-        git clone --recurse-submodules https://github.com/JeffreyXiang/diffoctreerast.git /tmp/extensions/diffoctreerast
-        pip install /tmp/extensions/diffoctreerast
+        mkdir -p ./tmp/extensions
+        git clone --recurse-submodules https://github.com/JeffreyXiang/diffoctreerast.git ./tmp/extensions/diffoctreerast
+        pip install ./tmp/extensions/diffoctreerast
     else
         echo "[DIFFOCTREERAST] Unsupported platform: $PLATFORM"
     fi
@@ -229,22 +230,23 @@ fi
 
 if [ "$MIPGAUSSIAN" = true ] ; then
     if [ "$PLATFORM" = "cuda" ] ; then
-        mkdir -p /tmp/extensions
-        git clone https://github.com/autonomousvision/mip-splatting.git /tmp/extensions/mip-splatting
-        pip install /tmp/extensions/mip-splatting/submodules/diff-gaussian-rasterization/
+        mkdir -p ./tmp/extensions
+        git clone https://github.com/autonomousvision/mip-splatting.git ./tmp/extensions/mip-splatting
+        pip install ./tmp/extensions/mip-splatting/submodules/diff-gaussian-rasterization/
     else
         echo "[MIPGAUSSIAN] Unsupported platform: $PLATFORM"
     fi
 fi
 
 if [ "$VOX2SEQ" = true ] ; then
-    if [ "$PLATFORM" = "cuda" ] ; then
-        mkdir -p /tmp/extensions
-        cp -r extensions/vox2seq /tmp/extensions/vox2seq
-        pip install /tmp/extensions/vox2seq
-    else
-        echo "[VOX2SEQ] Unsupported platform: $PLATFORM"
-    fi
+    echo "Please refer to TRELLIS for the installation of vox2seq"
+    # if [ "$PLATFORM" = "cuda" ] ; then
+    #     mkdir -p ./tmp/extensions
+    #     cp -r extensions/vox2seq ./tmp/extensions/vox2seq
+    #     pip install /tmp/extensions/vox2seq
+    # else
+    #     echo "[VOX2SEQ] Unsupported platform: $PLATFORM"
+    # fi
 fi
 
 if [ "$SPCONV" = true ] ; then
@@ -261,5 +263,5 @@ if [ "$SPCONV" = true ] ; then
 fi
 
 if [ "$DEMO" = true ] ; then
-    pip install gradio==4.44.1 gradio_litmodel3d==0.0.1
+    pip install gradio==4.44.1 gradio_image_prompter
 fi

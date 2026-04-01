@@ -4,8 +4,6 @@
 
 import os
 import copy
-import sys
-import importlib
 import argparse
 import pandas as pd
 import json
@@ -14,7 +12,6 @@ from easydict import EasyDict as edict
 import copy
 import fsspec
 import numpy as np
-from icecream import ic
 import imageio
 from concurrent.futures import ThreadPoolExecutor
 

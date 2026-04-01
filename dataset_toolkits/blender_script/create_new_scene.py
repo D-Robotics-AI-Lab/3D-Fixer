@@ -35,7 +35,7 @@ FLOOR_SIZE = 5.0
 BBOX_LEN = 2.0
 BBOX_LINE = BBOX_LEN**2 * 3
 DEPTH_BBOX_LINE = (FLOOR_SIZE * 1.5)**2 * 3
-INDEX_OFFSET = 3 # 0 for non, 1 for wall, and 2 for floor
+INDEX_OFFSET = 2 # 0 for non, 1 for wall, and 2 for floor
 MARGINS = 0.5
 
 EXT = {
@@ -230,9 +230,17 @@ def init_lighting():
     top_light.location = (0, 0, FLOOR_SIZE)
     top_light.scale = (100, 100, 100)
     # 
+    # # create bottom light
+    # bottom_light = bpy.data.objects.new("Bottom_Light", bpy.data.lights.new("Bottom_Light", type="AREA"))
+    # bpy.context.collection.objects.link(bottom_light)
+    # bottom_light.data.energy = 1000
+    # bottom_light.location = (0, 0, -10)
+    # bottom_light.rotation_euler = (0, 0, 0)
+    # # 
     return {
         "default_light": default_light,
         "top_light": top_light,
+        # "bottom_light": bottom_light
     }
 
 
@@ -440,7 +448,7 @@ def set_obj_index(parent_root, index):
     for obj in scene_meshes:
         obj.pass_index = index
 
-def normalize_obj(loaded_obj_list, scale, offset) -> Tuple[float, Vector]:
+def normalize_obj(loaded_obj_list) -> Tuple[float, Vector]:
     """Normalizes the scene by scaling and translating it to fit in a unit cube centered
     at the origin.
     # 
@@ -454,6 +462,7 @@ def normalize_obj(loaded_obj_list, scale, offset) -> Tuple[float, Vector]:
     """
     scene_root_objects = [obj for obj in bpy.context.scene.objects.values() if not obj.parent]
     scene_root_objects = list(filter(lambda x: x not in loaded_obj_list, scene_root_objects))
+    print (scene_root_objects)
     if len(scene_root_objects) > 1:
         # create an empty object to be used as a parent for all root objects
         scene = bpy.data.objects.new("ParentEmpty", None)
@@ -465,21 +474,21 @@ def normalize_obj(loaded_obj_list, scale, offset) -> Tuple[float, Vector]:
     else:
         scene = scene_root_objects[0]
     # 
-    # bbox_min, bbox_max = obj_bbox(scene)
-    # scale = 1 / max(bbox_max - bbox_min)
+    bbox_min, bbox_max = obj_bbox(scene)
+    scale = 1 / max(bbox_max - bbox_min)
     scene.scale = scene.scale * scale
     # 
     # Apply scale to matrix_world.
     bpy.context.view_layer.update()
-    # bbox_min, bbox_max = obj_bbox(scene)
-    # offset = -(bbox_min + bbox_max) / 2
-    scene.matrix_world.translation += Vector(offset)
+    bbox_min, bbox_max = obj_bbox(scene)
+    offset = -(bbox_min + bbox_max) / 2
+    scene.matrix_world.translation += offset
     # Apply scale to matrix_world.
     bpy.context.view_layer.update()
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     bpy.ops.object.select_all(action="DESELECT")
     # 
-    return scene # , scale, offset
+    return scene, scale, offset
 
 def aabb_intersect(a_min, a_max, b_min, b_max):
     """检查两个 AABB 是否相交"""
@@ -495,7 +504,8 @@ def aabb_inside(a_min, a_max, b_min, b_max):
             return False
     return True
 
-def attempt_randomize_obj_with_info(obj, z_rot, rand_scaling_factor, trans, floor_size=FLOOR_SIZE, default_size=1.0):
+def attempt_randomize_obj(obj, loaded_obj_list, floor_size=FLOOR_SIZE, default_size=1.0):
+    z_rot = np.random.rand() * 2.0 * np.pi
     org_rot_mode = obj.rotation_mode
     obj.rotation_mode = 'XYZ'
     obj.rotation_euler = Euler((0.0, 0.0, z_rot))
@@ -503,15 +513,138 @@ def attempt_randomize_obj_with_info(obj, z_rot, rand_scaling_factor, trans, floo
     bpy.context.view_layer.update()
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     # random scale
+    rand_scaling_factor = random.uniform(0.5, 2.0)
     obj.scale *= rand_scaling_factor
     bpy.context.view_layer.update()
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     # random position
-    trans = Vector(trans)
+    a_min, a_max = obj_bbox(obj)
+    x_min = -(floor_size / 2.0 - abs(a_min[0]))
+    x_max = floor_size / 2.0 - abs(a_max[0])
+    y_min = -(floor_size / 2.0 - abs(a_min[1]))
+    y_max = floor_size / 2.0 - abs(a_max[1])
+    x, y = random.uniform(x_min, x_max), random.uniform(y_min, y_max)
+    z = obj.location[2]
+    z_move = - default_size / 2.0 - a_min[2]
+    target_location = Vector((x, y, z + z_move))
+    trans = obj.location - target_location
     obj.location = obj.location - trans
     bpy.context.view_layer.update()
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-    return obj
+    # 
+    a_min, a_max = obj_bbox(obj)
+    collision = False
+    for other in loaded_obj_list:
+        b_min, b_max = obj_bbox(other)
+        if aabb_intersect(a_min, a_max, b_min, b_max):
+            collision = True
+            break
+    scale = rand_scaling_factor
+    trans = (trans[0], trans[1], trans[2])
+    rot = (0.0, 0.0, z_rot)
+    return not collision, obj, scale, trans, rot
+    # if not collision:
+    #     scale = rand_scaling_factor
+    #     trans = (trans[0], trans[1], trans[2])
+    #     rot = (0.0, 0.0, z_rot)
+    #     return True, obj, scale, trans, rot
+    # return False, obj, None, None, None
+
+def derandomize_obj(obj, scale, trans, rot):
+    # 
+    trans_vec = Vector((trans[0], trans[1], trans[2]))
+    obj.location = obj.location + trans_vec
+    bpy.context.view_layer.update()
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    # 
+    obj.scale /= scale
+    bpy.context.view_layer.update()
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    # 
+    org_rot_mode = obj.rotation_mode
+    obj.rotation_mode = 'XYZ'
+    obj.rotation_euler = Euler((0.0, 0.0, -rot[2]))
+    obj.rotation_mode = org_rot_mode
+    bpy.context.view_layer.update()
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+def randomize_obj(obj, loaded_obj_list, floor_size=FLOOR_SIZE, default_size=1.0, max_attempts = 100):
+    obj_origin_scale = copy.deepcopy(obj.scale)
+    obj_origin_dim = copy.deepcopy(obj.dimensions)
+    obj_origin_rot = copy.deepcopy(obj.rotation_quaternion)
+    obj_origin_location = copy.deepcopy(obj.location)
+    for attempt in range(max_attempts):
+        # random rotation
+        # z_rot = random.uniform(-np.pi / 2.0, np.pi / 2.0)
+        z_rot = np.random.rand() * 2.0 * np.pi
+        org_rot_mode = obj.rotation_mode
+        obj.rotation_mode = 'XYZ'
+        obj.rotation_euler = Euler((0.0, 0.0, z_rot))
+        obj.rotation_mode = org_rot_mode
+        bpy.context.view_layer.update()
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        # random scale
+        rand_scaling_factor = random.uniform(0.5, 2.0)
+        obj.scale *= rand_scaling_factor
+        bpy.context.view_layer.update()
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        # random position
+        a_min, a_max = obj_bbox(obj)
+        x_min = -(floor_size / 2.0 - abs(a_min[0]))
+        x_max = floor_size / 2.0 - abs(a_max[0])
+        y_min = -(floor_size / 2.0 - abs(a_min[1]))
+        y_max = floor_size / 2.0 - abs(a_max[1])
+        x, y = random.uniform(x_min, x_max), random.uniform(y_min, y_max)
+        z = obj.location[2]
+        z_move = - default_size / 2.0 - a_min[2]
+        target_location = Vector((x, y, z + z_move))
+        trans = obj.location - target_location
+        obj.location = obj.location - trans
+        bpy.context.view_layer.update()
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        # 
+        a_min, a_max = obj_bbox(obj)
+        collision = False
+        for other in loaded_obj_list:
+            b_min, b_max = obj_bbox(other)
+            if aabb_intersect(a_min, a_max, b_min, b_max):
+                collision = True
+                break
+            # if not aabb_inside(a_min, a_max, (-floor_size/2.0, -floor_size/2.0, -default_size/2.0), (floor_size/2.0, floor_size/2.0, floor_size/2.0-default_size/2.0)):
+            #     collision = True
+            #     break
+        if not collision:
+            scale = rand_scaling_factor
+            trans = (trans[0], trans[1], trans[2])
+            rot = (0.0, 0.0, z_rot)
+            # bpy.ops.object.select_all(action="DESELECT")
+            # obj.select_set(True)
+            # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            # bpy.ops.object.select_all(action="DESELECT")
+            return True, obj, scale, trans, rot
+        else:
+            obj.location = obj.location + trans
+            bpy.context.view_layer.update()
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            obj.scale /= rand_scaling_factor
+            bpy.context.view_layer.update()
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            org_rot_mode = obj.rotation_mode
+            obj.rotation_mode = 'XYZ'
+            obj.rotation_euler = Euler((0.0, 0.0, z_rot))
+            obj.rotation_mode = org_rot_mode
+            bpy.context.view_layer.update()
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            # obj.dimensions = obj_origin_dim
+            # obj.rotation_quaternion = obj_origin_rot
+            
+            
+            # bpy.ops.object.select_all(action="DESELECT")
+            # obj.select_set(True)
+            # bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            # bpy.ops.object.select_all(action="DESELECT")
+    return False, obj, None, None, None
+
 
 def get_transform_matrix(obj: bpy.types.Object) -> list:
     pos, rt, _ = obj.matrix_world.decompose()
@@ -571,24 +704,10 @@ def load_random_material(blend_files):
         )
         material = bpy.data.materials.get(mat_name)  # 获取真正材质对象
         return material, blend_file
-    
-def load_selected_material(blend_file):
-    """随机选择一个.blend文件并加载其中的一个材质对象"""
-    # 
-    with bpy.data.libraries.load(blend_file, link=False) as (data_from, data_to):
-        if not data_from.materials:
-            return None, blend_file
-        mat_name = random.choice(data_from.materials)
-        bpy.ops.wm.append(
-            filepath=os.path.join(blend_file, "Material", mat_name),
-            directory=os.path.join(blend_file, "Material"),
-            filename=mat_name
-        )
-        material = bpy.data.materials.get(mat_name)  # 获取真正材质对象
-        return material, blend_file
 
-def set_envs(floor_mat, wall_mat_list, hdr_file, floor_size=FLOOR_SIZE*1.5):
+def set_envs(floor_mat_list, wall_mat_list, hdr_list, floor_size=FLOOR_SIZE*1.5):
     # 
+    hdr_file = random.choice(hdr_list)
     world = bpy.context.scene.world
     world.use_nodes = True
     nodes = world.node_tree.nodes
@@ -608,7 +727,7 @@ def set_envs(floor_mat, wall_mat_list, hdr_file, floor_size=FLOOR_SIZE*1.5):
                                      align='WORLD', location=(0, 0, -0.5), scale=(1, 1, 1))
     floor = bpy.context.active_object
     floor.name = "MyManuallyAddedFloor"
-    floor_mat, floor_mat_file = load_selected_material(floor_mat)
+    floor_mat, floor_mat_file = load_random_material(floor_mat_list)
     bpy.data.objects['MyManuallyAddedFloor'].pass_index = 1
     if floor_mat:
         if floor.data.materials:
@@ -618,21 +737,21 @@ def set_envs(floor_mat, wall_mat_list, hdr_file, floor_size=FLOOR_SIZE*1.5):
     # 
     # 添加墙体 (四个方向)
     wall_positions = [
-        (0, (0, floor_size/2.0, floor_size/2.0-0.5), (np.deg2rad(90), 0, 0)),
-        (1, (0, -floor_size/2.0, floor_size/2.0-0.5), (np.deg2rad(-90), 0, 0)),
-        (2, (floor_size/2.0, 0, floor_size/2.0-0.5), (0, np.deg2rad(-90), 0)),
-        (3, (-floor_size/2.0, 0, floor_size/2.0-0.5), (0, np.deg2rad(90), 0)),
+        ((0, floor_size/2.0, floor_size/2.0-0.5), (np.deg2rad(90), 0, 0)),
+        ((0, -floor_size/2.0, floor_size/2.0-0.5), (np.deg2rad(-90), 0, 0)),
+        ((floor_size/2.0, 0, floor_size/2.0-0.5), (0, np.deg2rad(-90), 0)),
+        ((-floor_size/2.0, 0, floor_size/2.0-0.5), (0, np.deg2rad(90), 0)),
     ]
     # 
     wall_mat_file_list = []
     wall_index = 1
-    for idx, loc, rot in wall_positions:
+    for loc, rot in wall_positions:
         bpy.ops.mesh.primitive_plane_add(size=floor_size, enter_editmode=False,
                                          align='WORLD', location=loc, rotation=rot, scale=(1, 1, 1))
         wall = bpy.context.active_object
         wall.name = f"MyManuallyAddedWall_{wall_index:03d}"
         wall_index += 1
-        wall_mat, wall_mat_file = load_selected_material(wall_mat_list[idx])
+        wall_mat, wall_mat_file = load_random_material(wall_mat_list)
         wall_mat_file_list.append(wall_mat_file)
         if wall_mat:
             if wall.data.materials:
@@ -646,6 +765,68 @@ def set_envs(floor_mat, wall_mat_list, hdr_file, floor_size=FLOOR_SIZE*1.5):
     bpy.data.objects['MyManuallyAddedWall_004'].pass_index = 2
 
     return floor_mat_file, wall_mat_file_list, hdr_file
+
+# ===============LOW DISCREPANCY SEQUENCES================
+
+PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53]
+
+def radical_inverse(base, n):
+    val = 0
+    inv_base = 1.0 / base
+    inv_base_n = inv_base
+    while n > 0:
+        digit = n % base
+        val += digit * inv_base_n
+        n //= base
+        inv_base_n *= inv_base
+    return val
+
+def halton_sequence(dim, n):
+    return [radical_inverse(PRIMES[dim], n) for dim in range(dim)]
+
+def hammersley_sequence(dim, n, num_samples):
+    return [n / num_samples] + halton_sequence(dim - 1, n)
+
+def sphere_hammersley_upper_hemisphere(n, num_samples, offset=(0, 0)):
+    u, v = hammersley_sequence(2, n, num_samples)
+    # 
+    # 1. 应用抖动并归一化
+    u = (u + offset[0] / num_samples) % 1.0
+    v = (v + offset[1]) % 1.0
+    # 
+    # 2. 强制 u ∈ [0.5, 1.0) 确保上半球
+    u = 0.5 + u / 2.0
+    # 
+    # 3. 适配上半球的非线性变换
+    # if u < 0.125:
+    #     u = 2 * u
+    # else: ### TODO: check
+    u = (2 / 3) * u + 1 / 6
+    # 
+    # 4. 球面映射（theta ≥ 0 恒成立）
+    theta = np.arccos(1 - 2 * u) - np.pi / 2
+    phi = v * 2 * np.pi
+    return [phi, theta]
+
+def generate_views(num_views = 10):
+    # Build camera {yaw, pitch, radius, fov}
+    yaws = []
+    pitchs = []
+    offset = (np.random.rand(), np.random.rand())
+    for i in range(num_views):
+        y, p = sphere_hammersley_upper_hemisphere(i, num_views, offset)
+        yaws.append(y)
+        pitchs.append(p)
+    fov_min, fov_max = 20, 70
+    radius_min = np.sqrt(BBOX_LINE) / 2 / np.sin(fov_max / 360 * np.pi)
+    radius_max = np.sqrt(BBOX_LINE) / 2 / np.sin(fov_min / 360 * np.pi)
+    k_min = 1 / radius_max**2
+    k_max = 1 / radius_min**2
+    ks = np.random.uniform(k_min, k_max, (num_views,))
+    radius = [1 / np.sqrt(k) for k in ks]
+    fov = [2 * np.arcsin(np.sqrt(BBOX_LINE) / 2 / r) for r in radius]
+    views = [{'yaw': y, 'pitch': p, 'radius': r, 'fov': f} for y, p, r, f in zip(yaws, pitchs, radius, fov)]
+    return views
 
 def get_instance_pose(obj, cam):
     # 世界变换矩阵
@@ -661,6 +842,9 @@ def get_instance_pose(obj, cam):
     return translation, rotation_quat
 
 def main(arg):
+    # mv to 
+    # os.makedirs(arg.output_folder, exist_ok=True)
+
     # Initialize context
     init_render(engine=arg.engine, resolution=arg.resolution, geo_mode=arg.geo_mode)
     outputs, spec_nodes = init_nodes(
@@ -671,50 +855,45 @@ def main(arg):
         save_index=arg.save_index,
     )
     init_scene()
-    instance_info = {}
-
-    with open(arg.transforms_path, 'r') as f:
-        transforms = json.load(f)
-
-    sha256_to_transforms = {}
-    for inst_index, inst_info in transforms['instance'].items():
-        inst_info['instance_index'] = inst_index
-        sha256_to_transforms[inst_info['sha256']] = inst_info
 
     loaded_obj_list = []
     instance_info = {}
+    max_attempts = 100
     for sha256, fpath in arg.object.items():
         load_object(fpath)
-        inst_info = sha256_to_transforms[sha256]
-        obj = normalize_obj(loaded_obj_list, inst_info['scale'], inst_info['offset'])
-        placed_obj = attempt_randomize_obj_with_info(obj, inst_info['rand_rot'][2], inst_info['rand_scale'], inst_info['rand_trans'])
-        loaded_obj_list.append(obj)
-        instance_info[inst_info['instance_index']] = {
-            'sha256': sha256,
-            'scale': inst_info['scale'],
-            "offset": [inst_info['offset'][0], inst_info['offset'][1], inst_info['offset'][2]],
-            'rand_scale': inst_info['rand_scale'],
-            "rand_trans": [inst_info['rand_trans'][0], inst_info['rand_trans'][1], inst_info['rand_trans'][2]],
-            "rand_rot": [inst_info['rand_rot'][0], inst_info['rand_rot'][1], inst_info['rand_rot'][2]],
-            "transform_matrix": get_transform_matrix(placed_obj)
-        }
-        set_obj_index(obj, int(inst_info['instance_index']))
+        obj, scale, offset = normalize_obj(loaded_obj_list)
+        for _ in range(max_attempts):
+            success, placed_obj, rand_scale, rand_trans, rand_rot = attempt_randomize_obj(obj, loaded_obj_list)
+            if success:
+                break
+            else:
+                derandomize_obj(obj, rand_scale, rand_trans, rand_rot)
+        if success:
+            loaded_obj_list.append(obj)
+            set_obj_index(obj, len(loaded_obj_list) + INDEX_OFFSET)
+            instance_info[len(loaded_obj_list) + INDEX_OFFSET] = {
+                'sha256': sha256,
+                'scale': scale,
+                "offset": [offset.x, offset.y, offset.z],
+                'rand_scale': rand_scale,
+                "rand_trans": [rand_trans[0], rand_trans[1], rand_trans[2]],
+                "rand_rot": [rand_rot[0], rand_rot[1], rand_rot[2]],
+                "transform_matrix": get_transform_matrix(placed_obj)
+            }
+        else:
+            delete_objects(obj)
 
     # Initialize camera and lighting
     cam = init_camera()
     init_lighting()
     print('[INFO] Camera and lighting initialized.')
 
-    floor_path = os.path.join(arg.auxiliary_assets_dir, transforms['floor'])
-    wall_path = [os.path.join(arg.auxiliary_assets_dir, w) for w in transforms['wall']]
-    hdr_path = os.path.join(arg.auxiliary_assets_dir, transforms['hdr'])
-
     # set room
-    floor_mat_file, wall_mat_files, hdr_file = set_envs(floor_path, wall_path, hdr_path)
-    wall_001_visible = transforms['wall_001_visible']
-    wall_002_visible = transforms['wall_002_visible']
-    wall_003_visible = transforms['wall_003_visible']
-    wall_004_visible = transforms['wall_004_visible']
+    floor_mat_file, wall_mat_files, hdr_file = set_envs(arg.floor, arg.wall, arg.hdrs)
+    wall_001_visible = np.random.rand() < 0.9
+    wall_002_visible = np.random.rand() < 0.9
+    wall_003_visible = np.random.rand() < 0.9
+    wall_004_visible = np.random.rand() < 0.9
 
     # Create a list of views
     to_export = {
@@ -732,21 +911,24 @@ def main(arg):
 
     os.makedirs(arg.output_folder, exist_ok=True)
 
-    frames = transforms['frames']
-    for i, view in enumerate(frames):
+    views = generate_views(arg.num_views)
+    for i, view in enumerate(views):
         bpy.data.objects['MyManuallyAddedWall_001'].hide_render=not wall_001_visible
         bpy.data.objects['MyManuallyAddedWall_002'].hide_render=not wall_002_visible
         bpy.data.objects['MyManuallyAddedWall_003'].hide_render=not wall_003_visible
         bpy.data.objects['MyManuallyAddedWall_004'].hide_render=not wall_004_visible
         bpy.context.view_layer.update()
         bpy.context.evaluated_depsgraph_get().update()
-        cam.matrix_world = Matrix(view['transform_matrix'])
+        cam.location = (
+            view['radius'] * np.cos(view['yaw']) * np.cos(view['pitch']),
+            view['radius'] * np.sin(view['yaw']) * np.cos(view['pitch']),
+            view['radius'] * np.sin(view['pitch'])
+        )
+        location_x = view['radius'] * np.cos(view['yaw']) * np.cos(view['pitch'])
+        location_y = view['radius'] * np.sin(view['yaw']) * np.cos(view['pitch'])
+        location_z = view['radius'] * np.sin(view['pitch'])
         bpy.context.view_layer.update()
         bpy.context.evaluated_depsgraph_get().update()
-        location_x = cam.location[0]
-        location_y = cam.location[1]
-        location_z = cam.location[2]
-        radius = np.sqrt(location_x**2 + location_y**2 + location_z**2)
         if location_y + MARGINS >= bpy.data.objects['MyManuallyAddedWall_001'].location[1]:
             bpy.data.objects['MyManuallyAddedWall_001'].hide_render=True
         if location_y - MARGINS <= bpy.data.objects['MyManuallyAddedWall_002'].location[1]:
@@ -755,18 +937,20 @@ def main(arg):
             bpy.data.objects['MyManuallyAddedWall_003'].hide_render=True
         if location_x - MARGINS <= bpy.data.objects['MyManuallyAddedWall_004'].location[0]:
             bpy.data.objects['MyManuallyAddedWall_004'].hide_render=True
-        cam.data.lens = 16 / np.tan(view['camera_angle_x'] / 2)
+        cam.data.lens = 16 / np.tan(view['fov'] / 2)
         bpy.context.view_layer.update()
         bpy.context.evaluated_depsgraph_get().update()
         # 
         if arg.save_depth:
-            spec_nodes['depth_map'].inputs[1].default_value = radius - 0.5 * np.sqrt(DEPTH_BBOX_LINE)
-            spec_nodes['depth_map'].inputs[2].default_value = radius + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
+            spec_nodes['depth_map'].inputs[1].default_value = view['radius'] - 0.5 * np.sqrt(DEPTH_BBOX_LINE)
+            spec_nodes['depth_map'].inputs[2].default_value = view['radius'] + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
         # 
         bpy.context.scene.render.filepath = os.path.join(arg.output_folder, f'{i:03d}.png')
         for name, output in outputs.items():
             output.base_path = arg.output_folder
             output.file_slots[0].path = f'{i:03d}_{name}'
+            # output.file_slots[0].path = bpy.path.abspath(os.path.join(arg.output_folder, f'{i:03d}_{name}'))
+            # print (name, os.path.join(arg.output_folder, f'{i:03d}_{name}'), print(os.path.isabs(os.path.join(arg.output_folder, f'{i:03d}_{name}'))))
         # 
         # Render the scene
         bpy.ops.render.render(write_still=True)
@@ -781,7 +965,7 @@ def main(arg):
         # Save camera parameters
         metadata = {
             "file_path": f'{i:03d}.png',
-            "camera_angle_x": view['camera_angle_x'],
+            "camera_angle_x": view['fov'],
             "transform_matrix": get_transform_matrix(cam),
             "instances_in_the_view": {},
         }
@@ -793,8 +977,8 @@ def main(arg):
             }
         if arg.save_depth:
             metadata['depth'] = {
-                'min': radius - 0.5 * np.sqrt(DEPTH_BBOX_LINE),
-                'max': radius + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
+                'min': view['radius'] - 0.5 * np.sqrt(DEPTH_BBOX_LINE),
+                'max': view['radius'] + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
             }
         # 
         to_export["frames"].append(metadata)
@@ -820,10 +1004,12 @@ def main(arg):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Renders given obj file by rotation a camera around it.')
+    parser.add_argument('--num_views', type=int, help='JSON string of views. Contains a list of {yaw, pitch, radius, fov} object.')
     parser.add_argument('--object', type=json.loads, help='Path to the 3D model file to be rendered.')
+    parser.add_argument('--floor', type=json.loads, help='Path to the 3D model file to be rendered.')
+    parser.add_argument('--wall', type=json.loads, help='Path to the 3D model file to be rendered.')
+    parser.add_argument('--hdrs', type=json.loads, help='Path to the 3D model file to be rendered.')
     parser.add_argument('--output_folder', type=str, default='/tmp', help='The path the output will be dumped to.')
-    parser.add_argument('--transforms_path', type=str, default='/tmp', help='The path to load rendering information.')
-    parser.add_argument('--auxiliary_assets_dir', type=str, default='/tmp', help='The path to load HDR maps and texture maps.')
     parser.add_argument('--resolution', type=int, default=512, help='Resolution of the images.')
     parser.add_argument('--engine', type=str, default='CYCLES', help='Blender internal engine for rendering. E.g. CYCLES, BLENDER_EEVEE, ...')
     parser.add_argument('--geo_mode', action='store_true', help='Geometry mode for rendering.')

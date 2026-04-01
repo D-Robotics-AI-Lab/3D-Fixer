@@ -1,3 +1,9 @@
+# This file is modified from TRELLIS:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Modifications Copyright (c) 2026 Ze-Xin Yin, Robot labs of Horizon Robotics, and D-Robotics.
+
 import os
 import cv2
 import json
@@ -216,10 +222,6 @@ class SceneInstanceSingleConditionedMixin:
         pcd_points = (instance_rays_o + instance_rays_d * instance_rays_t[..., None]).detach().cpu().numpy() # pt2np
         pcd_colors = instance_rays_c
 
-        # pack['pixel_points'] = pcd_points
-        # pack['pixel_colors'] = repeat(pcd_colors, 'n -> n c', c=3)
-        # pcd_points = pcd_points.detach().cpu().numpy()
-
         # prepare for GT
         gt_rot = transforms['instance'][f'{selected_instance_index}']['rand_rot']
         canonical_gt_mesh_vertices = rot_vertices(pack.pop('origin_vertices'), rot_angles=[gt_rot[2]], axis_list=['z'])
@@ -284,9 +286,6 @@ class SceneInstanceSingleConditionedMixin:
             # fine stage
             fine_partial_cond_vox, fine_partial_cond_vox_mask, fine_target_vox = \
                 self.voxelize_all(fine_partial_cond_points, pcd_colors, fine_target_vertices_mesh, canonical_gt_mesh_faces)
-            
-            # pack['verts'] = local_gt_mesh_vertices
-            # pack['faces'] = canonical_gt_mesh_faces
             
             # fine
             pack['x_0'] = fine_target_vox

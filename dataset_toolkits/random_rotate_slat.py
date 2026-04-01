@@ -1,6 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Ze-Xin Yin, Robot labs of Horizon Robotics, and D-Robotics
+# SPDX-License-Identifier: Apache-2.0
+# See the LICENSE file in the project root for full license information.
+
 import os
 import copy
 import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import json
 import importlib
 import argparse
