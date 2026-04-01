@@ -1,6 +1,6 @@
 # [CVPR 2026] 3D-Fixer: Coarse-to-Fine In-place Completion for 3D Scenes from a Single Image
 
-## [Project Page](https://zx-yin.github.io/3dfixer/) | Paper | [Model](https://huggingface.co/HorizonRobotics/3D-Fixer) | Dataset | Online Demo
+## [Project Page](https://zx-yin.github.io/3dfixer/) | Paper | [Model](https://huggingface.co/HorizonRobotics/3D-Fixer) | [Dataset](https://huggingface.co/datasets/HorizonRobotics/ARSG-110K) | Online Demo
 
 ![teaser](assets/doc/teaser.png)
 
@@ -14,7 +14,7 @@
 
 ## Updates
 
-* [2025-03] Release model weights, evaluation dataset, and inference scripts of 3D-Fixer.
+* [2025-03] Release model weights, training and evaluation dataset, training and evaluation scripts, and the data curation scripts of 3D-Fixer. 
 
 <!-- Installation -->
 ## Installation
@@ -230,6 +230,7 @@ python train.py --config configs/3d_fixer/scene_obj_pre_train_ss_flow_img_dit_L_
 
 Finally, we start train the 3D-Fixer model on scene-level dataset.
 You need first follow the Step 12-13 to render the scene dataset as in in [dataset README](./DATASET.md).
+If you wish to create more scenes, please check Step 14.
 
 Make sure your data is organized as follows:
 
@@ -283,7 +284,9 @@ licenses. See THIRD_PARTY_NOTICES.md and per-file headers for details.
 
 ## Acknowledgment
 
-3D-Fixer builds upon the following amazing projects and models: [TRELLIS](https://github.com/microsoft/TRELLIS), [MIDI](https://github.com/VAST-AI-Research/MIDI-3D), [Gen3DSR](https://github.com/AndreeaDogaru/Gen3DSR), [MoGe v2](https://github.com/microsoft/MoGe), [DINO v2](https://github.com/facebookresearch/dinov2), [VGGT](https://github.com/facebookresearch/vggt), [Depth-Anything-v2](https://github.com/DepthAnything/Depth-Anything-V2), [Depth pro](https://github.com/apple/ml-depth-pro), [Grounding DINO](https://arxiv.org/abs/2303.05499), [SAM](https://huggingface.co/facebook/sam-vit-base).
+3D-Fixer builds upon the following amazing projects and models: [TRELLIS](https://github.com/microsoft/TRELLIS), [MIDI](https://github.com/VAST-AI-Research/MIDI-3D), [Gen3DSR](https://github.com/AndreeaDogaru/Gen3DSR), [MoGe v2](https://github.com/microsoft/MoGe), [DINO v2](https://github.com/facebookresearch/dinov2), [VGGT](https://github.com/facebookresearch/vggt), [Depth-Anything-v2](https://github.com/DepthAnything/Depth-Anything-V2), [Depth pro](https://github.com/apple/ml-depth-pro), [Grounding DINO](https://arxiv.org/abs/2303.05499), [SAM](https://huggingface.co/facebook/sam-vit-base), [SAM 2](https://github.com/facebookresearch/sam2).
+
+
 
 ## Citation
 

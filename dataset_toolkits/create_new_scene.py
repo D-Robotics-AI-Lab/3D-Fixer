@@ -22,21 +22,17 @@ from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 import shutil
 
-BLENDER_LINK = 'https://download.blender.org/release/Blender3.0/blender-3.0.1-linux-x64.tar.xz'
+BLENDER_LINK = 'https://download.blender.org/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz'
 BLENDER_INSTALLATION_PATH = '/tmp'
 TEMP_GLB_DIRS = f"{BLENDER_INSTALLATION_PATH}/place_to_hold_tmp_assets"
-BLENDER_PATH = f'{BLENDER_INSTALLATION_PATH}/blender-3.0.1-linux-x64/blender'
+BLENDER_PATH = f'{BLENDER_INSTALLATION_PATH}/blender-4.5.3-linux-x64/blender'
 
 def _install_blender():
     if not os.path.exists(BLENDER_PATH):
         os.system('sudo apt-get update')
         os.system('sudo apt-get install -y libxrender1 libxi6 libxkbcommon-x11-0 libsm6')
         os.system(f'wget {BLENDER_LINK} -P {BLENDER_INSTALLATION_PATH}')
-        os.system(f'tar -xvf {BLENDER_INSTALLATION_PATH}/blender-3.0.1-linux-x64.tar.xz -C {BLENDER_INSTALLATION_PATH}')
-
-def _install_blender():
-    if not os.path.exists(BLENDER_PATH):
-        os.system(f"tar -xvf {BLENDER_INSTALLATION_PATH}/blender-4.5.3-linux-x64.tar.xz -C {os.environ['WORKING_PATH']}")
+        os.system(f'tar -xvf {BLENDER_INSTALLATION_PATH}/blender-4.5.3-linux-x64.tar.xz -C {BLENDER_INSTALLATION_PATH}')
 
 def _render_scene(all_metadata: dict[str, pd.DataFrame], wall_mats_list, floor_mats_list, hdr_list, num_views,
                   num_min_objects, num_max_objects, output_dir, root_dir):
@@ -152,10 +148,8 @@ def _render_scene(all_metadata: dict[str, pd.DataFrame], wall_mats_list, floor_m
         '--resolution', '1024',
         '--output_folder', save_dir,
         '--engine', 'CYCLES',
-        '--save_mesh',
         '--save_depth',
         '--save_index',
-        '--save_normal',
     ]
 
     call(args, stdout=DEVNULL, stderr=DEVNULL)
@@ -195,24 +189,20 @@ def get_material_files(material_dir, data_format='blend'):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--root_dir', type=str, required=True,
-                        help='Directory to assets')
+    parser.add_argument('--obj_root_dir', type=str, required=True,
+                        help='Directory to all object assets')
     parser.add_argument('--obj_asset_dir', type=str, required=True,
-                        help='Directory to assets')
-    parser.add_argument('--hdr_asset_dir', type=str, required=True,
-                        help='Directory to assets')
-    parser.add_argument('--floor_mat_dir', type=str, required=True,
-                        help='Directory to assets')
-    parser.add_argument('--wall_mat_dir', type=str, required=True,
-                        help='Directory to assets')
-    parser.add_argument('--output_dir', type=str, required=True,
-                        help='Directory to save the metadata')
-    parser.add_argument('--num_views', type=int, default=150,
+                        help='Directory to subsets of 3D assets')
+    parser.add_argument('--auxiliary_assets_dir', type=str, required=True,
+                        help='Directory to load HDR maps and texture maps')
+    parser.add_argument('--scene_data_dir', type=str, required=True,
+                        help='Directory to save the created scenes')
+    parser.add_argument('--num_views', type=int, default=30,
                         help='Number of views to render')
     parser.add_argument('--num_max_objects', type=int, default=20,
-                        help='Number of views to render')
+                        help='Maximimal objects to load')
     parser.add_argument('--num_min_objects', type=int, default=5,
-                        help='Number of views to render')
+                        help='Minimal objects to load')
     parser.add_argument('--num_scenes', type=int, default=10000,
                         help='Number of scenes to construct')
     parser.add_argument('--rank', type=int, default=0)
@@ -225,23 +215,26 @@ if __name__ == '__main__':
     print('Checking blender...', flush=True)
     _install_blender()
 
-    os.makedirs(opt.output_dir, exist_ok=True)
+    os.makedirs(opt.scene_data_dir, exist_ok=True)
 
     # get asset list
     asset_sources = opt.obj_asset_dir.split(',')
     all_asset_metadata = {}
     for asset_dir in asset_sources:
-        assert opt.root_dir in asset_dir
+        assert opt.obj_root_dir in asset_dir
         dataset_name = os.path.basename(asset_dir.strip('/'))
         asset_metadata = get_metadata(asset_dir)
         all_asset_metadata[dataset_name] = asset_metadata
 
+    wall_mat_dir = os.path.join(opt.auxiliary_assets_dir, 'materials_wall')
+    floor_mat_dir = os.path.join(opt.auxiliary_assets_dir, 'materials_floor')
+    hdr_asset_dir = os.path.join(opt.auxiliary_assets_dir, 'hdrs')
     # get wall material list
-    wall_material_files = get_material_files(opt.wall_mat_dir, data_format='blend')
+    wall_material_files = get_material_files(wall_mat_dir, data_format='blend')
     # get floor material list
-    floor_material_files = get_material_files(opt.floor_mat_dir, data_format='blend')
+    floor_material_files = get_material_files(floor_mat_dir, data_format='blend')
     # get hdr
-    hdr_files = get_material_files(opt.hdr_asset_dir, data_format='exr')
+    hdr_files = get_material_files(hdr_asset_dir, data_format='exr')
 
     # all assets
     lines = '3D assets: \n'
@@ -260,7 +253,7 @@ if __name__ == '__main__':
     num_scenes = end - start
 
     # process objects
-    func = partial(_render_scene, root_dir=opt.root_dir, output_dir=opt.output_dir,
+    func = partial(_render_scene, root_dir=opt.obj_root_dir, output_dir=opt.scene_data_dir,
                    num_max_objects=opt.num_max_objects, num_min_objects=opt.num_min_objects,
                    num_views=opt.num_views, hdr_list=hdr_files, floor_mats_list=floor_material_files,
                    wall_mats_list=wall_material_files, all_metadata=all_asset_metadata)

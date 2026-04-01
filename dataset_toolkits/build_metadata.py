@@ -1,6 +1,7 @@
 # Copied from https://github.com/microsoft/TRELLIS
 # Original license: MIT
 # Copyright (c) the TRELLIS authors
+# Minor modifications by Ze-Xin Yin and Robot labs of Horizon Robotics, 2026.
 
 import os
 import shutil
@@ -53,6 +54,8 @@ if __name__ == '__main__':
         metadata = pd.read_csv(os.path.join(opt.output_dir, 'metadata.csv'))
     else:
         metadata = dataset_utils.get_metadata(**opt)
+        dataset_name = sys.argv[1] if sys.argv[1] != 'Objaverse' else f'{sys.argv[1]}_{opt.source}'
+        metadata.to_csv(os.path.join(opt.output_dir, f'{dataset_name}.csv'))
     metadata.set_index('sha256', inplace=True)
     
     # merge downloaded

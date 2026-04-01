@@ -1,3 +1,9 @@
+# This file is modified from TRELLIS:
+# https://github.com/microsoft/TRELLIS
+# Original license: MIT
+# Copyright (c) the TRELLIS authors
+# Modifications Copyright (c) 2026 Ze-Xin Yin, Robot labs of Horizon Robotics, and D-Robotics.
+
 import json
 import os
 import pandas as pd

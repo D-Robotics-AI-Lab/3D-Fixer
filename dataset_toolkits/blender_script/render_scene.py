@@ -35,7 +35,7 @@ FLOOR_SIZE = 5.0
 BBOX_LEN = 2.0
 BBOX_LINE = BBOX_LEN**2 * 3
 DEPTH_BBOX_LINE = (FLOOR_SIZE * 1.5)**2 * 3
-INDEX_OFFSET = 2 # 0 for non, 1 for wall, and 2 for floor
+INDEX_OFFSET = 3 # 0 for non, 1 for wall, and 2 for floor
 MARGINS = 0.5
 
 EXT = {
@@ -671,6 +671,7 @@ def main(arg):
         save_index=arg.save_index,
     )
     init_scene()
+    instance_info = {}
 
     with open(arg.transforms_path, 'r') as f:
         transforms = json.load(f)
@@ -686,8 +687,17 @@ def main(arg):
         load_object(fpath)
         inst_info = sha256_to_transforms[sha256]
         obj = normalize_obj(loaded_obj_list, inst_info['scale'], inst_info['offset'])
-        attempt_randomize_obj_with_info(obj, inst_info['rand_rot'][2], inst_info['rand_scale'], inst_info['rand_trans'])
+        placed_obj = attempt_randomize_obj_with_info(obj, inst_info['rand_rot'][2], inst_info['rand_scale'], inst_info['rand_trans'])
         loaded_obj_list.append(obj)
+        instance_info[inst_info['instance_index']] = {
+            'sha256': sha256,
+            'scale': inst_info['scale'],
+            "offset": [inst_info['offset'][0], inst_info['offset'][1], inst_info['offset'][2]],
+            'rand_scale': inst_info['rand_scale'],
+            "rand_trans": [inst_info['rand_trans'][0], inst_info['rand_trans'][1], inst_info['rand_trans'][2]],
+            "rand_rot": [inst_info['rand_rot'][0], inst_info['rand_rot'][1], inst_info['rand_rot'][2]],
+            "transform_matrix": get_transform_matrix(placed_obj)
+        }
         set_obj_index(obj, int(inst_info['instance_index']))
 
     # Initialize camera and lighting
@@ -735,6 +745,8 @@ def main(arg):
         bpy.context.evaluated_depsgraph_get().update()
         location_x = cam.location[0]
         location_y = cam.location[1]
+        location_z = cam.location[2]
+        radius = np.sqrt(location_x**2 + location_y**2 + location_z**2)
         if location_y + MARGINS >= bpy.data.objects['MyManuallyAddedWall_001'].location[1]:
             bpy.data.objects['MyManuallyAddedWall_001'].hide_render=True
         if location_y - MARGINS <= bpy.data.objects['MyManuallyAddedWall_002'].location[1]:
@@ -748,8 +760,8 @@ def main(arg):
         bpy.context.evaluated_depsgraph_get().update()
         # 
         if arg.save_depth:
-            spec_nodes['depth_map'].inputs[1].default_value = view['radius'] - 0.5 * np.sqrt(DEPTH_BBOX_LINE)
-            spec_nodes['depth_map'].inputs[2].default_value = view['radius'] + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
+            spec_nodes['depth_map'].inputs[1].default_value = radius - 0.5 * np.sqrt(DEPTH_BBOX_LINE)
+            spec_nodes['depth_map'].inputs[2].default_value = radius + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
         # 
         bpy.context.scene.render.filepath = os.path.join(arg.output_folder, f'{i:03d}.png')
         for name, output in outputs.items():
@@ -781,8 +793,8 @@ def main(arg):
             }
         if arg.save_depth:
             metadata['depth'] = {
-                'min': view['radius'] - 0.5 * np.sqrt(DEPTH_BBOX_LINE),
-                'max': view['radius'] + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
+                'min': radius - 0.5 * np.sqrt(DEPTH_BBOX_LINE),
+                'max': radius + 0.5 * np.sqrt(DEPTH_BBOX_LINE)
             }
         # 
         to_export["frames"].append(metadata)
