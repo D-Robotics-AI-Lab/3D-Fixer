@@ -1,6 +1,6 @@
 # [CVPR 2026] 3D-Fixer: Coarse-to-Fine In-place Completion for 3D Scenes from a Single Image
 
-## [Project Page](https://zx-yin.github.io/3dfixer/) | Paper | [Model](https://huggingface.co/HorizonRobotics/3D-Fixer) | [Dataset](https://huggingface.co/datasets/HorizonRobotics/ARSG-110K) | [Online Demo](https://huggingface.co/spaces/HorizonRobotics/3D-Fixer)
+## [Project Page](https://zx-yin.github.io/3dfixer/) | [Paper](https://arxiv.org/abs/2604.04406) | [Model](https://huggingface.co/HorizonRobotics/3D-Fixer) | [Dataset](https://huggingface.co/datasets/HorizonRobotics/ARSG-110K) | [Online Demo](https://huggingface.co/spaces/HorizonRobotics/3D-Fixer)
 
 ![teaser](assets/doc/teaser.png)
 
